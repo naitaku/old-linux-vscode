@@ -3,15 +3,22 @@ name: Build and Push to GHCR
 on:
   push:
     branches: [main]
-    strategy:
-      matrix:
-        baseimage: [ubuntu:16.04, ubuntu:18.04]
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        baseimage: [ubuntu:16.04, ubuntu:18.04]
 
     steps:
+      - name: Replace colon with dash in tag
+        env: 
+          BASE_IMAGE: ${{ matrix.baseimage }}
+        run: |
+          IMAGE_TAG="${BASE_IMAGE//:/-}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
       - name: Checkout source code
         uses: actions/checkout@v4
 
@@ -31,4 +38,4 @@ jobs:
           context: .
           build-args: BASE_IMAGE=${{ matrix.baseimage }}
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ matrix.baseimage.replace(':', '-') }}
+          tags: ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
